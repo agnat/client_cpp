@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project("prometheus-http")
 set(PROJECT_VERSION "0.99")
 set(PROJECT_DESCRIPTION "Prometheus C++ HTTP server library")
+set(CMAKE_MACOSX_RPATH true)
 
 include(GNUInstallDirs)
 include(FindPkgConfig)
@@ -14,8 +15,11 @@ add_library(prometheus-http SHARED prometheus_microhttpd.cc)
 
 target_link_libraries(prometheus-http PUBLIC
   ${MHD_LIBRARIES} prometheus-client)
-set_target_properties(prometheus-http PROPERTIES VERSION "0")
-set_target_properties(prometheus-http PROPERTIES SOVERSION "0.0.0")
+set_target_properties(prometheus-http PROPERTIES
+                      VERSION "0"
+                      SOVERSION "0.0.0"
+                      CXX_STANDARD 11
+                      CXX_STANDARD_REQUIRED ON)
 
 add_executable(example example.c)
 target_link_libraries(example prometheus-http)

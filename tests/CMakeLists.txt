@@ -8,3 +8,6 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 add_executable(without_bazel without_bazel.cpp)
 target_link_libraries(without_bazel prometheus-client)
+set_target_properties(without_bazel PROPERTIES
+                      CXX_STANDARD 11
+                      CXX_STANDARD_REQUIRED ON)
