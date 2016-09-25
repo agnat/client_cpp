@@ -28,8 +28,9 @@ add_custom_command(
   COMMAND protoc -I${CMAKE_SOURCE_DIR}/prometheus/proto
   ${CMAKE_SOURCE_DIR}/prometheus/proto/metrics.proto  --cpp_out=proto/)
 
-target_link_libraries(prometheus-client PRIVATE
-  ${ICU_LIBRARIES} ${PB_LIBRARIES})
+target_link_libraries(prometheus-client
+                      PUBLIC ${PB_LIBRARIES}
+                      PRIVATE ${ICU_LIBRARIES})
 set_target_properties(prometheus-client PROPERTIES
                       VERSION "0"
                       SOVERSION "0.0.0"
