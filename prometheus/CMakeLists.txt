@@ -15,7 +15,8 @@ pkg_check_modules(ICU REQUIRED icu-io icu-i18n icu-uc)
 pkg_check_modules(PB REQUIRED protobuf)
 
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${ICU_INCLUDE_DIRS}
-                    ${GTEST_INCLUDE_DIRS})
+                    ${GTEST_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR}/..)
+
 link_directories(${ICU_LIBRARY_DIRS})
 
 add_library(prometheus-client SHARED
@@ -26,8 +27,8 @@ add_library(prometheus-client SHARED
 add_custom_command(
   OUTPUT proto/metrics.pb.cc proto/metrics.pb.h
   COMMAND mkdir -p proto/
-  COMMAND protoc -I${CMAKE_SOURCE_DIR}/prometheus/proto
-  ${CMAKE_SOURCE_DIR}/prometheus/proto/metrics.proto  --cpp_out=proto/)
+  COMMAND protoc -I${CMAKE_CURRENT_SOURCE_DIR}/proto
+  ${CMAKE_CURRENT_SOURCE_DIR}/proto/metrics.proto  --cpp_out=proto/)
 
 target_link_libraries(prometheus-client
                       PUBLIC ${PB_LIBRARIES}
@@ -63,7 +64,7 @@ set(PKG_CONFIG_LIBS "-L\${libdir} -lprometheus-client")
 set(PKG_CONFIG_CFLAGS "-I\${includedir}")
 
 configure_file(
-  "${CMAKE_SOURCE_DIR}/tools/pkg-config.pc.cmake"
+  "../tools/pkg-config.pc.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc")
 
 install(
