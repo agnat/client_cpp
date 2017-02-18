@@ -15,6 +15,9 @@
 # include <libproc.h>
 # include <sys/resource.h>
 # include <sys/sysctl.h>
+# include <mach/task.h>
+# include <mach/task_info.h>
+# include <mach/mach_init.h>
 #endif // __APPLE__
 
 namespace prometheus {
@@ -205,6 +208,24 @@ namespace prometheus {
       }
     }
 
+    class MachTaskInfo {
+    public:
+      MachTaskInfo() {
+        mach_msg_type_number_t count = TASK_BASIC_INFO_64_COUNT;
+        kern_return_t result = task_info(mach_task_self(), TASK_BASIC_INFO_64,
+            (task_info_t)&task_info_, &count);
+        if (result != KERN_SUCCESS) {
+          throw std::runtime_error("task_info() failed");
+        }
+      }
+
+      size_t virtual_size() const { return task_info_.virtual_size; }
+      size_t resident_size() const { return task_info_.resident_size; }
+
+    private: // data members
+      task_basic_info task_info_;
+    };
+
     class MacOSProcessCollector : public ProcessCollector {
     public: // member functions
       MacOSProcessCollector() :
@@ -215,6 +236,9 @@ namespace prometheus {
       collection_type
       collect() const {
         collection_type l;
+        MachTaskInfo task_info;
+        set_virtual_memory(l, task_info.virtual_size());
+        set_resident_memory(l, task_info.resident_size());
         set_start_time(l, starttime_);
         set_cpu_time(l, get_cpu_time());
         set_open_fds(l, get_open_fds());
