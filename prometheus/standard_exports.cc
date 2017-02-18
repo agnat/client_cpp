@@ -111,44 +111,44 @@ namespace prometheus {
       }
       
     protected:
-      static inline
+      static
       void
       set_virtual_memory(collection_type & l, double value) {
         set_gauge(l, "process_virtual_memory_bytes", "Virtual memory size in bytes (vsize)", value);
       }
 
-      static inline
+      static
       void
       set_resident_memory(collection_type & l, double value) {
         set_gauge(l, "process_resident_memory_bytes", "Resident memory size in bytes (rss)", value);
       }
 
-      static inline
+      static
       void
       set_start_time(collection_type & l, double value) {
         set_gauge(l, "process_start_time_seconds", "Start time of the process since unix epoch in seconds.", value);
       }
 
-      static inline
+      static
       void
       set_cpu_time(collection_type & l, double value) {
         set_gauge(l, "process_cpu_seconds_total", "Total user and system CPU time spent in seconds.", value);
       }
 
-      static inline
+      static
       void
       set_open_fds(collection_type & l, double value) {
         set_gauge(l, "process_open_fds", "Number of open file descriptors.", value);
       }
 
-      static inline
+      static
       void
       set_max_fds(collection_type & l, double value) {
         set_gauge(l, "process_max_fds", "Maximum number of open file descriptors.", value);
       }
       // Convenience function to add a gauge to the list of
       // MetricFamilies and set its name/help/type and one value.
-      static inline
+      static
       void
       set_gauge(collection_type& l,
                 std::string const& name,
@@ -191,9 +191,10 @@ namespace prometheus {
     };
 
 #ifdef __APPLE__
-    inline
     double
-    timeval_to_double(timeval const& tv) { return tv.tv_sec + tv.tv_usec * 1e-6; }
+    timeval_to_double(timeval const& tv) {
+      return tv.tv_sec + tv.tv_usec * 1e-6;
+    }
 
     void
     kinfo_for_pid(kinfo_proc * kinfo, pid_t pid) {
@@ -237,6 +238,7 @@ namespace prometheus {
       collect() const {
         collection_type l;
         MachTaskInfo task_info;
+
         set_virtual_memory(l, task_info.virtual_size());
         set_resident_memory(l, task_info.resident_size());
         set_start_time(l, starttime_);
@@ -248,7 +250,6 @@ namespace prometheus {
 
     private: // member functions
 
-      inline
       double
       get_start_time() const {
         kinfo_proc kinfo;
@@ -256,7 +257,6 @@ namespace prometheus {
         return timeval_to_double(kinfo.kp_proc.p_starttime);
       }
 
-      inline
       double
       get_cpu_time() const {
         rusage resources;
@@ -271,7 +271,6 @@ namespace prometheus {
         return timeval_to_double(total);
       }
 
-      inline
       size_t
       get_open_fds() const {
         int result = proc_pidinfo(pid_, PROC_PIDLISTFDS, 0, NULL, 0);
@@ -291,7 +290,6 @@ namespace prometheus {
         return result / PROC_PIDLISTFD_SIZE;
       }
 
-      inline
       size_t
       get_max_fds() const {
         rlimit limit;
