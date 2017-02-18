@@ -13,6 +13,8 @@
 
 #ifdef __APPLE__
 # include <libproc.h>
+# include <sys/resource.h>
+# include <sys/sysctl.h>
 #endif // __APPLE__
 
 namespace prometheus {
@@ -186,20 +188,65 @@ namespace prometheus {
     };
 
 #ifdef __APPLE__
+    inline
+    double
+    timeval_to_double(timeval const& tv) { return tv.tv_sec + tv.tv_usec * 1e-6; }
+
+    void
+    kinfo_for_pid(kinfo_proc * kinfo, pid_t pid) {
+      const size_t miblen = 4;
+      int mib[miblen] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid};
+      size_t len = sizeof(kinfo_proc);
+      int result = sysctl(mib, miblen, kinfo, &len, NULL, 0);
+      if (result != 0) {
+        std::ostringstream error;
+        error << "sysctl() failed: " << strerror(errno);
+        throw std::runtime_error(error.str());
+      }
+    }
+
     class MacOSProcessCollector : public ProcessCollector {
     public: // member functions
       MacOSProcessCollector() :
-        pid_(getpid())
+        pid_(getpid()),
+        starttime_(get_start_time())
       {}
 
       collection_type
       collect() const {
         collection_type l;
+        set_start_time(l, starttime_);
+        set_cpu_time(l, get_cpu_time());
         set_open_fds(l, get_open_fds());
         set_max_fds(l, get_max_fds());
         return l;
       }
+
     private: // member functions
+
+      inline
+      double
+      get_start_time() const {
+        kinfo_proc kinfo;
+        kinfo_for_pid(&kinfo, pid_);
+        return timeval_to_double(kinfo.kp_proc.p_starttime);
+      }
+
+      inline
+      double
+      get_cpu_time() const {
+        rusage resources;
+        int result = getrusage(RUSAGE_SELF, &resources);
+        if (result != 0) {
+          std::ostringstream error;
+          error << "getrusage() failed: " << strerror(errno);
+          throw std::runtime_error(error.str());
+        }
+        timeval total;
+        timeradd(&resources.ru_utime, &resources.ru_stime, &total);
+        return timeval_to_double(total);
+      }
+
       inline
       size_t
       get_open_fds() const {
@@ -230,6 +277,7 @@ namespace prometheus {
 
     private: // data members
       const pid_t pid_;
+      const double starttime_;
 
     };
 #endif // __APPLE__
